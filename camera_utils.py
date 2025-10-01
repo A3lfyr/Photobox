@@ -18,8 +18,8 @@ def detect_cameras():
 
     # Forcer MJPG et résolution max
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
     cap.set(cv2.CAP_PROP_FPS, 30)
 
     actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -59,8 +59,8 @@ class UsbCamera:
         
         # Forcer MJPG
         self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
         self.camera.set(cv2.CAP_PROP_FPS, 30)
         
         # Vérification
@@ -87,6 +87,19 @@ class UsbCamera:
     def get_frame(self):
         with self.lock:
             return self.frame
+
+    def get_preview_frame(self):
+        """Retourne une version JPEG compressée pour l'aperçu (720p)"""
+        frame = self.get_frame_raw()  # Frame originale
+        if frame is None:
+            return None
+        import cv2
+        # Redimensionner à 1280x720 pour le preview
+        import numpy as np
+        img = cv2.imdecode(np.frombuffer(frame, np.uint8), cv2.IMREAD_COLOR)
+        img = cv2.resize(img, (1280, 720))
+        ret, jpeg = cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+        return jpeg.tobytes() if ret else None
     
     def stop(self):
         self.is_running = False
