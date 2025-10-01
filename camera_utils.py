@@ -114,7 +114,7 @@ class UsbCamera:
                 for test_width, test_height, res_name in resolutions_to_test:
                     self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, test_width)
                     self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, test_height)
-                    self.camera.set(cv2.CAP_PROP_FPS, 25)
+                    self.camera.set(cv2.CAP_PROP_FPS, 30)
                     actual_width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
                     actual_height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
                     actual_fps = self.camera.get(cv2.CAP_PROP_FPS)
