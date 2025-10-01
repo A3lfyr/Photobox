@@ -98,6 +98,8 @@ class UsbCamera:
                 }.get(backend, "Inconnu")
                 logger.info(f"[USB CAMERA] Tentative d'ouverture de la caméra {self.camera_id} avec backend {backend_name}...")
                 self.camera = cv2.VideoCapture(self.camera_id, backend)
+                # ⚡ Forcer MJPEG sinon la Pi choisit YUYV → 5fps seulement
+                self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
                 if not self.camera.isOpened():
                     logger.info(f"[USB CAMERA] Backend {backend_name} : impossible d'ouvrir la caméra {self.camera_id}")
                     if self.camera:
