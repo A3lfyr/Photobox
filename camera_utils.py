@@ -90,7 +90,7 @@ class UsbCamera:
 
     def get_preview_frame(self):
         """Retourne une version JPEG compressée pour l'aperçu (720p)"""
-        frame = self.get_frame_raw()  # Frame originale
+        frame = self.get_frame()  # Frame originale
         if frame is None:
             return None
         import cv2
