@@ -18,8 +18,8 @@ def detect_cameras():
 
     # Forcer MJPG et résolution max
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     cap.set(cv2.CAP_PROP_FPS, 30)
 
     actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -59,8 +59,8 @@ class UsbCamera:
         
         # Forcer MJPG
         self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.camera.set(cv2.CAP_PROP_FPS, 30)
         
         # Vérification
