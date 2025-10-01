@@ -115,9 +115,19 @@ class UsbCamera:
                     self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, test_width)
                     self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, test_height)
                     self.camera.set(cv2.CAP_PROP_FPS, 30)
+                    
+                    # Vérif du codec en plus
+                    fourcc = int(self.camera.get(cv2.CAP_PROP_FOURCC))
+                    codec = "".join([chr((fourcc >> 8 * i) & 0xFF) for i in range(4)])
+                    
                     actual_width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
                     actual_height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
                     actual_fps = self.camera.get(cv2.CAP_PROP_FPS)
+                    
+                    logger.info(
+                        f"[USB CAMERA] Tentative {res_name}: {actual_width}x{actual_height}@{actual_fps:.1f}fps ({codec})"
+                    )
+
                     ret, frame = self.camera.read()
                     if ret and frame is not None and frame.shape[1] >= test_width * 0.9 and frame.shape[0] >= test_height * 0.9:
                         best_resolution = (actual_width, actual_height, actual_fps, res_name)
