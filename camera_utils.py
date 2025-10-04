@@ -90,8 +90,8 @@ class UsbCamera:
         try:
             self.camera = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
             self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1024)
+            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 768)
             self.camera.set(cv2.CAP_PROP_FPS, 30)
             ret, frame = self.camera.read()
             if not ret or frame is None:
