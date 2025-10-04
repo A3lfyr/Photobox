@@ -665,9 +665,10 @@ def video_stream():
     return Response(generate_video_stream(),
                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
-def generate_video_stream():
+def generate_video_stream(fps=30):
     """Générer le flux vidéo MJPEG selon le type de caméra configuré"""
     global camera_process, usb_camera, last_frame
+    interval = 1 / fps
     
     # Déterminer le type de caméra à utiliser
     camera_type = config.get('camera_type', 'picamera')
@@ -698,7 +699,7 @@ def generate_video_stream():
                            b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' +
                            frame + b'\r\n')
                 else:
-                    time.sleep(0.03)  # Attendre si pas de frame disponible
+                    time.sleep(interval)  # Attendre si pas de frame disponible
         
         # Utiliser la Pi Camera par défaut
         else:
@@ -709,7 +710,7 @@ def generate_video_stream():
                 '--codec', 'mjpeg',
                 '--width', '1280',   # Résolution native plus compatible
                 '--height', '720',   # Vrai 16/9 sans bandes noires
-                '--framerate', '15', # Framerate plus élevé pour cette résolution
+                '--framerate', fps, # Framerate plus élevé pour cette résolution
                 '--timeout', '0',    # Durée infinie
                 '--output', '-',     # Sortie vers stdout
                 '--inline',          # Headers inline
