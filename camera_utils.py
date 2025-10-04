@@ -87,42 +87,28 @@ class UsbCamera:
         return self._initialize_camera()
 
     def _initialize_camera(self):
-        backends = [cv2.CAP_DSHOW, cv2.CAP_ANY, cv2.CAP_V4L2, cv2.CAP_GSTREAMER]
-        for backend in backends:
-            try:
-                backend_name = {
-                    cv2.CAP_ANY: "Auto",
-                    cv2.CAP_DSHOW: "DirectShow",
-                    cv2.CAP_V4L2: "V4L2",
-                    cv2.CAP_GSTREAMER: "GStreamer",
-                }.get(backend, "Inconnu")
-                logger.info(f"[USB CAMERA] Tentative d'ouverture de la caméra {self.camera_id} avec backend {backend_name}...")
-                self.camera = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
-                self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-                self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-                self.camera.set(cv2.CAP_PROP_FPS, 30)
-                ret, frame = self.camera.read()
-                if not ret or frame is None:
-                    logger.info(
-                        f"[USB CAMERA] Backend {backend_name} : la caméra {self.camera_id} ne retourne pas d'image de manière stable"
-                    )
-                    self.camera.release()
-                    continue
-                self.is_running = True
-                self.thread = threading.Thread(target=self._capture_loop)
-                self.thread.daemon = True
-                self.thread.start()
-                logger.info(f"[USB CAMERA] Caméra {self.camera_id} démarrée avec succès via backend {backend_name}")
-                return True
-            except Exception as e:
-                logger.info(f"[USB CAMERA] Erreur avec backend {backend_name}: {e}")
-                if self.camera:
-                    self.camera.release()
-                continue
-        self.error = f"Impossible d'ouvrir la caméra {self.camera_id} avec tous les backends testés"
-        logger.info(f"[USB CAMERA] Erreur: {self.error}")
-        return False
+        try:
+            self.camera = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
+            self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+            self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            self.camera.set(cv2.CAP_PROP_FPS, 30)
+            ret, frame = self.camera.read()
+            if not ret or frame is None:
+                logger.info(f"[USB CAMERA] La caméra {self.camera_id} ne retourne pas d'image")
+                self.camera.release()
+                return False
+            self.is_running = True
+            self.thread = threading.Thread(target=self._capture_loop)
+            self.thread.daemon = True
+            self.thread.start()
+            logger.info(f"[USB CAMERA] Caméra {self.camera_id} démarrée avec succès via V4L2/MJPG")
+            return True
+        except Exception as e:
+            logger.info(f"[USB CAMERA] Erreur avec V4L2/MJPG: {e}")
+            if self.camera:
+                self.camera.release()
+            return False
 
     def _reconnect(self):
         logger.info(f"[USB CAMERA] Tentative de reconnexion de la caméra {self.camera_id}...")
