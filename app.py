@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for, flash, Response, abort
+from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for, flash, Response, abort, send_file
 import os
 import time
 import subprocess
@@ -13,6 +13,7 @@ import signal
 import atexit
 import base64
 import sys
+import io
 from datetime import datetime
 from runware import Runware, IImageInference
 from config_utils import (
@@ -155,38 +156,13 @@ frame_lock = threading.Lock()
 
 @app.route('/capture', methods=['POST'])
 def capture_photo():
-    """Capturer la frame MJPEG actuelle directement depuis le flux vidéo"""
-    global current_photo, last_frame
-    
     try:
-        # Générer un nom de fichier unique
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'photo_{timestamp}.jpg'
-        filepath = os.path.join(PHOTOS_FOLDER, filename)
-        
-        # Capturer la frame actuelle du flux MJPEG
-        with frame_lock:
-            if last_frame is not None:
-                # Sauvegarder la frame directement
-                with open(filepath, 'wb') as f:
-                    f.write(last_frame)
-                
-                current_photo = filename
-                logger.info(f"Frame MJPEG capturée avec succès: {filename}")
-                
-                # Envoyer sur Telegram si activé
-                send_type = config.get('telegram_send_type', 'photos')
-                if send_type in ['photos', 'both']:
-                    threading.Thread(target=send_to_telegram, args=(filepath, config, "photo")).start()
-                
-                return jsonify({'success': True, 'filename': filename})
-            else:
-                logger.info("Aucune frame disponible dans le flux")
-                return jsonify({'success': False, 'error': 'Aucune frame disponible'})
-            
+        photo_bytes = camera.capture_high_res_photo()
+        # Sauvegarde ou traitement de la photo
+        # ...
+        return send_file(io.BytesIO(photo_bytes), mimetype='image/jpeg')
     except Exception as e:
-        logger.info(f"Erreur lors de la capture: {e}")
-        return jsonify({'success': False, 'error': f'Erreur de capture: {str(e)}'})
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/review')
 def review_photo():

@@ -103,32 +103,10 @@ class UsbCamera:
                     if self.camera:
                         self.camera.release()
                     continue
-                resolutions_to_test = [
-                    (1920, 1080, "Full HD"),
-                    (1280, 720, "HD"),
-                    (640, 480, "VGA"),
-                ]
-                best_resolution = None
-                for test_width, test_height, res_name in resolutions_to_test:
-                    self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, test_width)
-                    self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, test_height)
-                    self.camera.set(cv2.CAP_PROP_FPS, 25)
-                    actual_width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-                    actual_height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                    actual_fps = self.camera.get(cv2.CAP_PROP_FPS)
-                    ret, frame = self.camera.read()
-                    if ret and frame is not None and frame.shape[1] >= test_width * 0.9 and frame.shape[0] >= test_height * 0.9:
-                        best_resolution = (actual_width, actual_height, actual_fps, res_name)
-                        logger.info(
-                            f"[USB CAMERA] Résolution {res_name} ({actual_width}x{actual_height}@{actual_fps:.1f}fps) configurée avec succès"
-                        )
-                        break
-                    else:
-                        logger.info(f"[USB CAMERA] Résolution {res_name} ({test_width}x{test_height}) non supportée")
-                if not best_resolution:
-                    logger.info(f"[USB CAMERA] Backend {backend_name} : aucune résolution fonctionnelle trouvée")
-                    self.camera.release()
-                    continue
+                # Force 720p/30fps
+                self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                self.camera.set(cv2.CAP_PROP_FPS, 30)
                 ret, frame = self.camera.read()
                 if not ret or frame is None:
                     logger.info(
@@ -203,4 +181,33 @@ class UsbCamera:
         if self.camera:
             self.camera.release()
         logger.info(f"[USB CAMERA] Caméra {self.camera_id} arrêtée")
+
+    def capture_high_res_photo(self):
+        """Capture une photo en résolution maximale (ex: 4K)"""
+        # Arrête le flux vidéo temporairement
+        was_running = self.is_running
+        self.is_running = False
+        if self.camera:
+            self.camera.release()
+        # Ouvre la caméra en 4K
+        high_res_width = 3840
+        high_res_height = 2160
+        cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, high_res_width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, high_res_height)
+        cap.set(cv2.CAP_PROP_FPS, 5)
+        time.sleep(0.5)  # Laisse le capteur s'ajuster
+        ret, frame = cap.read()
+        if ret and frame is not None:
+            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            cap.release()
+            # Reprend le flux vidéo en 720p si nécessaire
+            if was_running:
+                self._initialize_camera()
+            return jpeg.tobytes()
+        else:
+            cap.release()
+            if was_running:
+                self._initialize_camera()
+            raise Exception("Capture haute résolution échouée")
 
