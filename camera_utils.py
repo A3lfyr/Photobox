@@ -119,37 +119,13 @@ class UsbCamera:
         return self._initialize_camera()
 
     def _capture_loop(self):
-        consecutive_errors = 0
-        max_errors = 10
         while self.is_running:
-            try:
-                if not self.camera or not self.camera.isOpened():
-                    logger.info(f"[USB CAMERA] Caméra {self.camera_id} déconnectée, tentative de reconnexion...")
-                    self._reconnect()
-                    time.sleep(1)
-                    continue
-                ret, frame = self.camera.read()
-                if ret:
-                    _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
-                    with self.lock:
-                        self.frame = jpeg.tobytes()
-                    consecutive_errors = 0
-                else:
-                    consecutive_errors += 1
-                    logger.info(f"[USB CAMERA] Erreur de lecture de frame (tentative {consecutive_errors}/{max_errors})")
-                    if consecutive_errors >= max_errors:
-                        logger.info(f"[USB CAMERA] Trop d'erreurs consécutives, tentative de reconnexion...")
-                        self._reconnect()
-                        consecutive_errors = 0
-                time.sleep(0.03)
-            except Exception as e:
-                consecutive_errors += 1
-                logger.info(f"[USB CAMERA] Erreur de capture: {e} (tentative {consecutive_errors}/{max_errors})")
-                if consecutive_errors >= max_errors:
-                    logger.info(f"[USB CAMERA] Trop d'erreurs consécutives, tentative de reconnexion...")
-                    self._reconnect()
-                    consecutive_errors = 0
-                time.sleep(0.1)
+            ret, frame = self.camera.read()
+            if ret:
+                _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                with self.lock:
+                    self.frame = jpeg.tobytes()
+            # Pas de sleep ici
 
     def get_frame(self):
         with self.lock:
