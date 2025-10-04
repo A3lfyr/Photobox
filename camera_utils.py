@@ -97,13 +97,8 @@ class UsbCamera:
                     cv2.CAP_GSTREAMER: "GStreamer",
                 }.get(backend, "Inconnu")
                 logger.info(f"[USB CAMERA] Tentative d'ouverture de la caméra {self.camera_id} avec backend {backend_name}...")
-                self.camera = cv2.VideoCapture(self.camera_id, backend)
-                if not self.camera.isOpened():
-                    logger.info(f"[USB CAMERA] Backend {backend_name} : impossible d'ouvrir la caméra {self.camera_id}")
-                    if self.camera:
-                        self.camera.release()
-                    continue
-                # Force 720p/30fps
+                self.camera = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
+                self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
                 self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
                 self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
                 self.camera.set(cv2.CAP_PROP_FPS, 30)
@@ -184,24 +179,20 @@ class UsbCamera:
 
     def capture_high_res_photo(self):
         """Capture une photo en résolution maximale (ex: 4K)"""
-        # Arrête le flux vidéo temporairement
         was_running = self.is_running
         self.is_running = False
         if self.camera:
             self.camera.release()
-        # Ouvre la caméra en 4K
-        high_res_width = 3840
-        high_res_height = 2160
         cap = cv2.VideoCapture(self.camera_id, cv2.CAP_V4L2)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, high_res_width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, high_res_height)
-        cap.set(cv2.CAP_PROP_FPS, 5)
-        time.sleep(0.5)  # Laisse le capteur s'ajuster
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+        cap.set(cv2.CAP_PROP_FPS, 30)
+        time.sleep(0.5)
         ret, frame = cap.read()
         if ret and frame is not None:
             _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
             cap.release()
-            # Reprend le flux vidéo en 720p si nécessaire
             if was_running:
                 self._initialize_camera()
             return jpeg.tobytes()
